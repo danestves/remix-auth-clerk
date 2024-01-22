@@ -1,37 +1,20 @@
-# Remix Auth - Strategy Template
+<h1 align="center">
+  💿 Remix Auth Clerk
+</h1>
 
-> A template for creating a new Remix Auth strategy.
+<div align="center">
+  <p>
+    <a href="https://github.com/danestves/remix-auth-clerk?tab=readme-ov-file#features"><strong>Explore Docs »</strong></a>
+  </p>
+</div>
 
-If you want to create a new strategy for Remix Auth, you could use this as a template for your repository.
+```
+npm install remix-auth-clerk
+```
 
-The repo installs the latest version of Remix Auth and do the setup for you to have tests, linting and typechecking.
-
-## How to use it
-
-1. In the `package.json` change `name` to your strategy name, also add a description and ideally an author, repository and homepage keys.
-2. In `src/index.ts` change the `MyStrategy` for the strategy name you want to use.
-3. Implement the strategy flow inside the `authenticate` method. Use `this.success` and `this.failure` to correctly send finish the flow.
-4. In `tests/index.test.ts` change the tests to use your strategy and test it. Inside the tests you have access to `jest-fetch-mock` to mock any fetch you may need to do.
-5. Once you are ready, set the secrets on Github
-   - `NPM_TOKEN`: The token for the npm registry
-   - `GIT_USER_NAME`: The git username you want the bump workflow to use in the commit.
-   - `GIT_USER_EMAIL`: The email you want the bump workflow to use in the commit.
-
-## Scripts
-
-- `build`: Build the project for production using the TypeScript compiler (strips the types).
-- `typecheck`: Check the project for type errors, this also happens in build but it's useful to do in development.
-- `lint`: Runs ESLint against the source codebase to ensure it pass the linting rules.
-- `test`: Runs all the test using Jest.
-
-## Documentations
-
-To facilitate creating a documentation for your strategy, you can use the following Markdown
-
-```markdown
-# Strategy Name
-
-<!-- Description -->
+[![CI](https://img.shields.io/github/actions/workflow/status/danestves/remix-auth-clerk/main.yml?label=Build)](https://github.com/danestves/remix-auth-clerk/actions/workflows/main.yml)
+[![Release](https://img.shields.io/npm/v/remix-auth-clerk.svg?&label=Release)](https://www.npmjs.com/package/remix-auth-clerk)
+[![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/danestves/remix-auth-clerk/blob/main/LICENSE)
 
 ## Supported runtimes
 
@@ -40,9 +23,158 @@ To facilitate creating a documentation for your strategy, you can use the follow
 | Node.js    | ✅          |
 | Cloudflare | ✅          |
 
-<!-- If it doesn't support one runtime, explain here why -->
+> [!NOTE]
+> Remix Auth Clerk is only Remix v2.0+ compatible.
 
-## How to use
+Let's see how we can implement the Strategy into our Remix App.
 
-<!-- Explain how to use the strategy, here you should tell what options it expects from the developer when instantiating the strategy -->
+## Create an OAuth application in Clerk
+
+You need to create an OAuth application in Clerk. You can do it via the [Backend API](https://clerk.com/docs/reference/backend-api/tag/OAuth-Applications) by providing a `callback_url`, a `name` and optionally the `scopes`.
+
+> [!NOTE]
+> In this context the name is used to help you identify your application and is not displayed anywhere publicly.
+
+```bash
+curl
+ -X POST https://api.clerk.com/v1/oauth_applications \
+ -H "Authorization: Bearer <CLERK_SECRET_KEY>"  \
+ -H "Content-Type: application/json" \
+ -d {"callback_url":"https://example.com/auth/clerk/callback", "name": "remix-auth-clerk-example-app", "scopes": "profile email public_metadata"}
 ```
+
+Clerk will return the following:
+
+```json
+{
+   "object":"oauth_application",
+   "id":"oa_2O4BCh3zUONvWlZHtBXv6s6tm7u",
+   "instance_id":"ins_2O4Ak02T4fDmKKv6tK5h0WJ8ou8",
+   "name":"remix-auth-clerk-example-app",
+   "client_id":"d9g4CT4WYiCBm7EU",
+   "client_secret":"VVgbT7i6sPo7sTljq2zj12fjmg0jPL5k",
+   "scopes":"profile email public_metadata",
+   "callback_url":"https://example.com/auth/clerk/callback",
+   "authorize_url":"https://clerk.your-domain.com/oauth/authorize",
+   "token_fetch_url":"https://clerk.your-domain.com/oauth/token",
+   "user_info_url":"https://clerk.your-domain.com/oauth/userinfo",
+   "created_at":1680809847940,
+   "updated_at":1680810135145
+}
+```
+
+`clerk.your-domain.com` is the domain of your Clerk instance. Save it without the `https://` part and anyting after the `.com` or `.dev` part as you will need it later.
+
+> [!WARNING]  
+> Save the `client_id` and `client_secret` as you will need them later for security reasons.
+
+## Session Storage
+
+We'll require to initialize a new Cookie Session Storage to work with. This Session will store user data and everything related to authentication.
+
+Create a file called `session.server.ts` wherever you want.<br />
+Implement the following code and replace the `secrets` property with a strong string into your `.env` file.
+
+```ts
+// app/services/auth/session.server.ts
+import { createCookieSessionStorage } from '@remix-run/node'
+
+export const sessionStorage = createCookieSessionStorage({
+  cookie: {
+    name: '__session',
+    sameSite: 'lax',
+    path: '/',
+    httpOnly: true,
+    secrets: [process.env.SESSION_SECRET || 'secret'],
+    secure: process.env.NODE_ENV === 'production',
+  },
+})
+
+export const { getSession, commitSession, destroySession } = sessionStorage
+```
+
+## Strategy Instance
+
+Now that we have everything set up, we can start implementing the Strategy Instance.
+
+Create a file called `auth.server.ts` wherever you want.<br />
+Implement the following code and replace the `secret` property with a strong string into your `.env` file.
+
+```ts
+// app/services/auth/config.server.ts
+import { Authenticator } from 'remix-auth'
+import { ClerkStrategy } from 'remix-auth-clerk'
+
+import { sessionStorage } from './session.server'
+import { db } from '~/db'
+
+// Your interface must be anything that will return on the verify callback
+type User = {
+  id: string
+}
+
+export let authenticator = new Authenticator<User>(sessionStorage, {
+  throwOnError: true,
+})
+
+authenticator.use(
+  new ClerkStrategy(
+    {
+      domain: "clerk.your-domain.com",
+      clientID: "d9g4CT4WYiCBm7EU",
+      clientSecret: "VVgbT7i6sPo7sTljq2zj12fjmg0jPL5k",
+      callbackURL: "https://example.com/auth/clerk/callback",
+    },
+    async ({ profile, accessToken, refreshToken, extraParams, request, context }) => {
+      // Here you can do anything you want with the user data
+      return {
+         id: profile.id
+      }
+    },
+  ),
+)
+```
+
+## Auth Routes
+
+Last but not least, we'll require to create the routes that will handle the authentication flow. Create the following files inside the `app/routes` folder.
+
+### `login.ts`
+
+```ts
+/// app/routes/login.ts
+
+import { authenticator } from '~/services/auth/config.server'
+
+export async function loader({ request }: DataFunctionArgs) {
+  return authenticator.authenticate('clerk', request, {
+    successRedirect: '/private-routes',
+    failureRedirect: '/',
+  })
+}
+```
+
+### `logout.ts`
+
+```ts
+/// app/routes/logout.ts
+import { type ActionFunctionArgs, redirect } from "@remix-run/node";
+
+import { authenticator } from "~/services/auth/config.server";
+
+export async function loader() {
+	throw redirect("/");
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+	return authenticator.logout(request, { redirectTo: "/" });
+}
+```
+
+## Support
+
+If you found this library helpful, please consider leaving us a ⭐ [star](https://github.com/danestves/remix-auth-clerk). It helps the repository grow and provides the necessary motivation to continue maintaining the project.
+
+## License
+
+Licensed under the [MIT license](https://github.com/danestves/remix-auth-clerk/blob/main/LICENSE).

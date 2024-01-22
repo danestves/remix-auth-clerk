@@ -3,77 +3,86 @@ name: CI
 on: [push]
 
 jobs:
-  build:
-    name: Build
+  lint:
+    name: ⬣ ESLint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Use Node 20
-        uses: actions/setup-node@v1
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20.x'
 
-      - name: Install dependencies
-        uses: bahmutov/npm-install@v1
+      - name: 🧅 Setup bun
+        uses: oven-sh/setup-bun@v1
 
-      - name: Build
-        run: npm run build
+      - name: 📥 Download deps
+        run: bun install
+
+      - name: 🔬 Lint
+        run: bun run lint
 
   typecheck:
-    name: Typechecker
+    name: ʦ TypeScript
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Use Node 20
-        uses: actions/setup-node@v1
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20.x'
 
-      - name: Install dependencies
-        uses: bahmutov/npm-install@v1
+      - name: 🧅 Setup bun
+        uses: oven-sh/setup-bun@v1
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: 📥 Download deps
+        run: bun install
+
+      - name: 🔎 Type check
+        run: bun run typecheck
 
   test:
-    name: Unit and Integration Tests
+    name: ⚡ Vitest
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Use Node 20
-        uses: actions/setup-node@v1
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20.x'
 
-      - name: Install dependencies
-        uses: bahmutov/npm-install@v1
+      - name: 🧅 Setup bun
+        uses: oven-sh/setup-bun@v1
 
-      - name: Test
-        run: npm run test -- --ci --coverage --maxWorkers=2
+      - name: 📥 Download deps
+        run: bun install
 
-  lint:
-    name: Linter
+      - name: ⚡ Run test
+        run: bun run test -- --ci --coverage --maxWorkers=2
+
+  build:
+    name: 👷 Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Use Node 20
-        uses: actions/setup-node@v1
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20.x'
 
-      - name: Install dependencies
-        uses: bahmutov/npm-install@v1
+      - name: 🧅 Setup bun
+        uses: oven-sh/setup-bun@v1
 
-      - name: Build
-        run: npm run build
+      - name: 📥 Download deps
+        run: bun install
 
-      - name: Lint
-        run: npm run lint
+      - name: 🏗️ Build
+        run: bun run build

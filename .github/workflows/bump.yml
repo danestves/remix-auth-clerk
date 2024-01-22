@@ -1,4 +1,4 @@
-name: Bump version
+name: 🔼 Bump version
 
 on:
   workflow_dispatch:
@@ -9,26 +9,33 @@ on:
 
 jobs:
   bump-version:
-    name: Bump version
+    name: 🔼 Bump version
     runs-on: ubuntu-latest
     steps:
-      - name: Check out source
-        uses: actions/checkout@v2
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.DEPLOY_KEY }}
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
+      
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '20.x'
           cache: 'npm'
-      - name: Install dependencies
-        uses: bahmutov/npm-install@v1
-      - name: Setup Git
+
+      - name: 🧅 Setup bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: 📥 Download deps
+        run: bun install
+
+      - name: ⚙️ Setup Git
         run: |
           git config user.name '${{ secrets.GIT_USER_NAME }}'
           git config user.email '${{ secrets.GIT_USER_EMAIL }}'
-      - name: bump version
+
+      - name: 🔼 Bump version
         run: npm version ${{ github.event.inputs.version }}
 
-      - name: Push latest version
+      - name: ☁️ Push latest version
         run: git push origin main --follow-tags
