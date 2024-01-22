@@ -1,3 +1,5 @@
+![Remix Auth Clerk](https://github.com/danestves/remix-auth-clerk/assets/31737273/82cde78a-a58c-4e14-bd1a-23fcf0da78d2)
+
 <h1 align="center">
   💿 Remix Auth Clerk
 </h1>
