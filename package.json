@@ -16,10 +16,10 @@
       "import": "./dist/index.mjs"
     }
   },
-  "main": "./build/index.js",
-  "types": "./build/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "build",
+    "dist",
     "package.json",
     "README.md"
   ],
