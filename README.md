@@ -18,6 +18,15 @@ npm install remix-auth-clerk
 [![Release](https://img.shields.io/npm/v/remix-auth-clerk.svg?&label=Release)](https://www.npmjs.com/package/remix-auth-clerk)
 [![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/danestves/remix-auth-clerk/blob/main/LICENSE)
 
+## Features
+
+- **🔨 Supports multiple runtimes**: Node.js and Cloudflare Workers
+- **🔒 Secure** -- SOC 2 Type 2, HIPAA, Bot & Brute force detection, Password leak protection and many more thanks to Clerk
+- **🔌 Simple** -- easy to use and extend (_inside Clerk platform_)
+- **📙 Use any database** -- save the information you need with any database that you want thanks to `remix-auth`
+- **🚀 Remix Auth Foundation** -- an amazing authentication library for Remix.
+
+
 ## Supported runtimes
 
 | Runtime    | Has Support |
